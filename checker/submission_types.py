@@ -3,9 +3,11 @@ from uuid import uuid4
 from tempfile import SpooledTemporaryFile
 from file_processor import SubmissionDirectory
 import asyncio
+import time
 
 from s3 import S3API
 from sandbox_adapter import SandboxAdapter
+from submission_status import SubmissionStatus
 
 class Submission(ABC):
     @abstractmethod
@@ -73,26 +75,52 @@ class SimpleAcadnetIS(Submission):
     def init_sandbox(self, endpoint):
         self.sandbox = SandboxAdapter(endpoint)
 
-    def run_tests(self):
+    def run_tests(self, status: SubmissionStatus):
+        status.set_status("uploading submission file")
         # upload submission file
         self.sandbox.upload_file(self.submission_dir.submission_dir + "/" + self.submission_filename)
 
         # compile submission
+        status.set_status("compiling submission")
         res = self.sandbox.run_command(f"g++ {self.submission_filename} -o main")
         if res["returncode"] != 0:
-            raise Exception("[SimpleAcadnetIS] - Compilation error")
+            status.set_build_status("failed " + res["stderr"])
+            return
+        
+        status.set_build_status("success")
 
         # upload tests
         in_files = [filename for filename in self.tests if filename.endswith(".in")]
 
         for in_file in in_files:
+            time.sleep(3)
+            status.set_status(f"uploading test {in_file}")
             self.sandbox.upload_file(self.submission_dir.submission_dir + "/" + in_file)
 
             # run test
+            status.set_status(f"running test {in_file}")
             res = self.sandbox.run_command(f"./main < {in_file}")
-            print(res)
+            if res["returncode"] != 0:
+                status.add_test_result(in_file, False, "failed", res, {})
+                continue
 
+            # compare output
+            status.set_status(f"comparing output for test {in_file}")
+            ref_file = in_file.replace(".in", ".ref")
 
+            test_content = res["stdout"]
+            ref_content = self.submission_dir.get_file(ref_file)
+            diff_results = {
+                "actual": test_content,
+                "ref": ref_content
+            }
+
+            if test_content == ref_content:
+                status.add_test_result(in_file, True, "success", res, diff_results)
+            else:
+                status.add_test_result(in_file, False, "failed", res, diff_results)
+
+        status.set_status("finished")
 
 def get_new_submission(type: str) -> Submission:
     if type == "SimpleAcadnetIS":
