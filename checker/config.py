@@ -12,4 +12,11 @@ class Config:
         # Check if all required keys are present
         if not 'port' in self.config:
             raise ValueError("Port not specified in config file")
+
+        if not 'Minio' in self.config:
+            raise ValueError("Minio not specified in config file")
+
         self.port = self.config['port']
+
+    def get(self, key):
+        return self.config[key]

@@ -9,8 +9,6 @@ class SubmissionDirectory:
         self.submission_dir = os.path.join(self.tmpdir, str(submission_id))
         os.mkdir(self.submission_dir)
 
-        print("Submission files path: " + self.submission_dir)
-
         self.files = []
 
     def __enter__(self):

@@ -4,6 +4,8 @@ from tempfile import SpooledTemporaryFile
 from file_processor import SubmissionDirectory
 import asyncio
 
+from s3 import S3API
+
 class Submission(ABC):
     @abstractmethod
     def __init__(self, submission_id):
@@ -17,6 +19,10 @@ class Submission(ABC):
     def add_submission_file(self, filename, content):
         pass
 
+    @abstractmethod
+    def download_tests(self, bucket, s3api: S3API):
+        pass
+
 
 class SimpleAcadnetIS(Submission):
     def __init__(self, submission_id):
@@ -24,13 +30,30 @@ class SimpleAcadnetIS(Submission):
         self.submission_dir = SubmissionDirectory(submission_id)
 
     def get_submission_id(self):
-        return self.submission_id
+        return str(self.submission_id)
     
     def add_submission_file(self, filename, content):
-        print("Adding file to SimpleAcadnetIS submission")
-        print(filename)
-
         self.submission_dir.add_file(filename, content)
+
+    def download_tests(self, bucket, s3api: S3API):
+        files_in_bucket = s3api.get_files_in_bucket(bucket)
+
+        # remove all files that do not end with .in or .ref
+        files_in_bucket = [filename for filename in files_in_bucket if filename.endswith(".in") or filename.endswith(".ref")]
+
+        # count the number of files that end with .in
+        num_in_files = len([filename for filename in files_in_bucket if filename.endswith(".in")])
+
+        # count the number of files that end with .ref
+        num_ref_files = len([filename for filename in files_in_bucket if filename.endswith(".ref")])
+
+        # check if the number of .in files is equal to the number of .ref files
+        if num_in_files != num_ref_files:
+            raise Exception("[SimpleAcadnetIS] - Number of .in files is not equal to the number of .ref files")
+
+        for filename in files_in_bucket:
+            self.submission_dir.add_file(filename, s3api.download_file(bucket, filename).decode("utf-8"))
+
 
 def get_new_submission(type: str) -> Submission:
     if type == "SimpleAcadnetIS":
