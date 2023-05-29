@@ -19,6 +19,7 @@ def get_status(submission_id: str):
 
 def _run_submission_async(submission: Submission):
     update_status(submission.get_submission_id(), "finished")
+    submission.run_tests()
 
 
 class SubmissionRunner:

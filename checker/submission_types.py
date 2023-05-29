@@ -5,6 +5,7 @@ from file_processor import SubmissionDirectory
 import asyncio
 
 from s3 import S3API
+from sandbox_adapter import SandboxAdapter
 
 class Submission(ABC):
     @abstractmethod
@@ -23,17 +24,30 @@ class Submission(ABC):
     def download_tests(self, bucket, s3api: S3API):
         pass
 
+    @abstractmethod
+    def init_sandbox(self, endpoint):
+        pass
+
+    @abstractmethod
+    def run_tests(self):
+        pass
+
 
 class SimpleAcadnetIS(Submission):
     def __init__(self, submission_id):
         self.submission_id = submission_id
         self.submission_dir = SubmissionDirectory(submission_id)
+        self.submission_filename = None
+        self.tests = []
 
     def get_submission_id(self):
         return str(self.submission_id)
     
     def add_submission_file(self, filename, content):
+        if self.submission_filename is not None:
+            raise Exception("[SimpleAcadnetIS] - Submission file already exists")
         self.submission_dir.add_file(filename, content)
+        self.submission_filename = filename
 
     def download_tests(self, bucket, s3api: S3API):
         files_in_bucket = s3api.get_files_in_bucket(bucket)
@@ -53,6 +67,31 @@ class SimpleAcadnetIS(Submission):
 
         for filename in files_in_bucket:
             self.submission_dir.add_file(filename, s3api.download_file(bucket, filename).decode("utf-8"))
+        
+        self.tests = files_in_bucket
+
+    def init_sandbox(self, endpoint):
+        self.sandbox = SandboxAdapter(endpoint)
+
+    def run_tests(self):
+        # upload submission file
+        self.sandbox.upload_file(self.submission_dir.submission_dir + "/" + self.submission_filename)
+
+        # compile submission
+        res = self.sandbox.run_command(f"g++ {self.submission_filename} -o main")
+        if res["returncode"] != 0:
+            raise Exception("[SimpleAcadnetIS] - Compilation error")
+
+        # upload tests
+        in_files = [filename for filename in self.tests if filename.endswith(".in")]
+
+        for in_file in in_files:
+            self.sandbox.upload_file(self.submission_dir.submission_dir + "/" + in_file)
+
+            # run test
+            res = self.sandbox.run_command(f"./main < {in_file}")
+            print(res)
+
 
 
 def get_new_submission(type: str) -> Submission:

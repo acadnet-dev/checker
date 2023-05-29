@@ -16,7 +16,11 @@ class Config:
         if not 'Minio' in self.config:
             raise ValueError("Minio not specified in config file")
 
+        if not 'SandboxEndpoint' in self.config:
+            raise ValueError("SandboxEndpoint not specified in config file")
+
         self.port = self.config['port']
+        self.sandbox_endpoint = self.config['SandboxEndpoint']
 
     def get(self, key):
         return self.config[key]

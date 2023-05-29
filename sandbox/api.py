@@ -18,11 +18,6 @@ def hello(file: UploadFile = File(...)):
         with open(os.path.join(tmpdir, file.filename), "wb") as f:
             f.write(file.file.read())
 
-        # list files in tmpdir
-        print("files in tmpdir:")
-        for f in os.listdir(tmpdir):
-            print(f)
-
         return "ok"
     except Exception as e:
         return {"error": str(e)}
@@ -41,6 +36,7 @@ def run_command(cmd: Cmd):
         return {
             "stdout": cmd.stdout,
             "stderr": cmd.stderr,
+            "returncode": cmd.returncode
         }
     except subprocess.CalledProcessError as e:
         return {"error": utils.subprocess_error_to_json(e)}
