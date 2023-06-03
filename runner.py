@@ -25,6 +25,7 @@ def _run_submission_async(submission: Submission):
     update_status(submission.get_submission_id(), submission_status)
     
     submission.run_tests(submission_status)
+    submission.end_sandbox()
 
 
 class SubmissionRunner:

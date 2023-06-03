@@ -26,7 +26,7 @@ async def create_submission(type: str, bucket: str, file: UploadFile = File(...)
 
         # init sandbox
         # TODO: change this to launch new sandbox instance for each submission
-        submission.init_sandbox(config.sandbox_endpoint)
+        submission.init_sandbox()
 
         # run submission
         runner.run_submission(submission)

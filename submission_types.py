@@ -6,7 +6,7 @@ import asyncio
 import time
 
 from s3 import S3API
-from sandbox_adapter import SandboxAdapter
+from sandbox_adapter import SandboxAdapter, SandboxCreator
 from submission_status import SubmissionStatus
 
 class Submission(ABC):
@@ -27,11 +27,14 @@ class Submission(ABC):
         pass
 
     @abstractmethod
-    def init_sandbox(self, endpoint):
+    def init_sandbox(self):
         pass
 
     @abstractmethod
     def run_tests(self):
+        pass
+
+    def end_sandbox(self):
         pass
 
 
@@ -72,7 +75,10 @@ class SimpleAcadnetIS(Submission):
         
         self.tests = files_in_bucket
 
-    def init_sandbox(self, endpoint):
+    def init_sandbox(self):
+        sandbox_creator = SandboxCreator()
+        self.sandbox_container_id = sandbox_creator.create_sandbox()
+        endpoint = sandbox_creator.get_sandbox_endpoint(self.sandbox_container_id)
         self.sandbox = SandboxAdapter(endpoint)
 
     def run_tests(self, status: SubmissionStatus):
@@ -121,6 +127,10 @@ class SimpleAcadnetIS(Submission):
                 status.add_test_result(in_file, False, "failed", res, diff_results)
 
         status.set_status("finished")
+
+    def end_sandbox(self):
+        sandbox_creator = SandboxCreator()
+        sandbox_creator.stop_sandbox(self.sandbox_container_id)
 
 def get_new_submission(type: str) -> Submission:
     if type == "SimpleAcadnetIS":
