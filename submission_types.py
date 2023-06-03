@@ -76,10 +76,12 @@ class SimpleAcadnetIS(Submission):
         self.tests = files_in_bucket
 
     def init_sandbox(self):
+        status.set_status("creating sandbox")
         sandbox_creator = SandboxCreator()
         self.sandbox_container_id = sandbox_creator.create_sandbox()
         endpoint = sandbox_creator.get_sandbox_endpoint(self.sandbox_container_id)
         self.sandbox = SandboxAdapter(endpoint)
+        status.set_status("sandbox launched")
 
     def run_tests(self, status: SubmissionStatus):
         status.set_status("uploading submission file")

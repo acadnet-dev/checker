@@ -24,10 +24,6 @@ async def create_submission(type: str, bucket: str, file: UploadFile = File(...)
         # download tests from s3 bucket
         submission.download_tests(bucket, s3api)
 
-        # init sandbox
-        # TODO: change this to launch new sandbox instance for each submission
-        submission.init_sandbox()
-
         # run submission
         runner.run_submission(submission)
 
