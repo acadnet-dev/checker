@@ -30,31 +30,39 @@ class SandboxCreator:
 
             return container.id
         else:
+            # run()
             config.load_incluster_config()
 
             v1 = client.CoreV1Api()
 
             with open(path.join(path.dirname(__file__), "sandbox-cpp-deployment.yaml")) as f:
-                dep = yaml.safe_load(f)
+                pod = yaml.safe_load(f)
 
                 # add random id to deployment name
-                deployment_id = str(uuid.uuid4())
-                deployment_name = dep["metadata"]["name"] + "-" + deployment_id
-                dep["metadata"]["name"] = deployment_name
+                pod_id = str(uuid.uuid4())
+                pod_name = pod["metadata"]["name"] + "-" + pod_id
+                pod["metadata"]["name"] = pod_name
 
-                resp = k8s_apps_v1.create_namespaced_pod(
-                    body=dep, namespace="acadnet")
-                print(f"Pod created with name {deployment_name}")
-            
-            # wait for sandbox to start maxim 10 seconds
-            for i in range(10):
-                resp = v1.list_namespaced_pod(
-                    namespace="default", label_selector=f"app=sandbox-cpp,deployment={deployment_id}")
-                if len(resp.items) > 0:
-                    break
+                resp = v1.create_namespaced_pod(
+                    body=pod, namespace="acadnet")
+                print(f"Pod created with name {pod_name}")
+
+            # wait for sandbox to start maxim 60 seconds
+            for i in range(60):
+                status = v1.read_namespaced_pod_status(pod_name, "acadnet")
+                if status.status.phase == "Running":
+                    pod = v1.read_namespaced_pod_log(pod_name, "acadnet")
+                    if "Uvicorn running" in pod:
+                        break
                 time.sleep(1)
+                print("Waiting for sandbox to start")
 
-            return deployment_name
+            if "Uvicorn running" not in pod:
+                raise Exception("Sandbox failed to start")
+            
+            print("Sandbox online")
+
+            return pod_name
 
     def get_sandbox_endpoint(self, id):
         if self.config.is_development():
@@ -62,7 +70,12 @@ class SandboxCreator:
             print(f"Launched docker sandbox on port {container.ports['2999/tcp'][0]['HostPort']} with id {container.id}")
             return f"http://localhost:{container.ports['2999/tcp'][0]['HostPort']}"
         else:
-            pass
+            config.load_incluster_config()
+
+            v1 = client.CoreV1Api()
+
+            status = v1.read_namespaced_pod_status(pod_name, "acadnet")
+            return f"http://{status.status.pod_ip}:2999"
 
     def stop_sandbox(self, id):
         if self.config.is_development():
@@ -70,7 +83,12 @@ class SandboxCreator:
             container.stop()
             print(f"Stopped sandbox with id {container.id}")
         else:
-            pass
+            config.load_incluster_config()
+
+            v1 = client.CoreV1Api()
+
+            v1.delete_namespaced_pod(pod_name, "acadnet")
+            print(f"Stopped sandbox with id {pod_name}")
 
 class SandboxAdapter:
     def __init__(self, endpoint):
