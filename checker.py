@@ -6,6 +6,7 @@ import yaml
 from os import path
 import uuid
 import time
+import sys
 
 if __name__ == '__main__':
     try:
@@ -42,6 +43,8 @@ if __name__ == '__main__':
         print("Sandbox online")
     except Exception as e:
         print(e)
+
+    sys.stdout.flush()
 
     while True:
         time.sleep(1)
