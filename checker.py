@@ -20,6 +20,6 @@ if __name__ == '__main__':
         deployment_name = dep["metadata"]["name"] + "-" + deployment_id
         dep["metadata"]["name"] = deployment_name
 
-        resp = k8s_apps_v1.create_namespaced_pod(
+        resp = v1.create_namespaced_pod(
             body=dep, namespace="acadnet")
         print(f"Pod created with name {deployment_name}")
