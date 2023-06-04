@@ -75,7 +75,7 @@ class SimpleAcadnetIS(Submission):
         
         self.tests = files_in_bucket
 
-    def init_sandbox(self):
+    def init_sandbox(self, status: SubmissionStatus):
         status.set_status("creating sandbox")
         sandbox_creator = SandboxCreator()
         self.sandbox_container_id = sandbox_creator.create_sandbox()

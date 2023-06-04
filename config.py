@@ -13,8 +13,8 @@ class Config:
         if not 'Port' in self.config:
             raise ValueError("Port not specified in config file")
 
-        if not 'Minio' in self.config:
-            raise ValueError("Minio not specified in config file")
+        if not 'S3' in self.config:
+            raise ValueError("S3 not specified in config file")
 
         if not 'Environment' in self.config:
             raise ValueError("Environment not specified in config file")

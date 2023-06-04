@@ -1,7 +1,7 @@
 {
     "Environment": "Development",
     "Port": 3000,
-    "Minio": {
+    "S3": {
         "Endpoint": "localhost:9000",
         "AccessKey": "dMOdmQT7su15cg7dccBm",
         "SecretKey": "rdcFipCFwvXaQz7wgqjGZZwSy5qcN1eo16Vmb4uy",

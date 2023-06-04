@@ -7,10 +7,10 @@ class S3API:
     def __init__(self, config: Config):
         self.config = config
         self.client = Minio(
-                config.get("Minio")["Endpoint"],
-                access_key=config.get("Minio")["AccessKey"],
-                secret_key=config.get("Minio")["SecretKey"],
-                secure=config.get("Minio")["WithSSL"]
+                config.get("S3")["Endpoint"],
+                access_key=config.get("S3")["AccessKey"],
+                secret_key=config.get("S3")["SecretKey"],
+                secure=config.get("S3")["WithSSL"]
             )
 
     def get_files_in_bucket(self, bucket):
