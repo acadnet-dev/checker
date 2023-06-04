@@ -76,7 +76,7 @@ class SandboxCreator:
 
             v1 = client.CoreV1Api()
 
-            status = v1.read_namespaced_pod_status(pod_name, "acadnet")
+            status = v1.read_namespaced_pod_status(id, "acadnet")
             return f"http://{status.status.pod_ip}:2999"
 
     def stop_sandbox(self, id):
