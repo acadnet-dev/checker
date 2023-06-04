@@ -6,6 +6,7 @@ class SubmissionStatus:
         self.test_results = []
         self.status_history = []
         self.submission = submission
+        self.build_status = "not built yet"
 
         self.set_status("created")
 

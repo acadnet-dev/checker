@@ -6,6 +6,7 @@ from kubernetes import client, config
 import yaml
 import uuid
 from os import path
+from submission_status import SubmissionStatus
 
 class SandboxCreator:
     def __init__(self):
@@ -16,7 +17,7 @@ class SandboxCreator:
             pass
             # TODO: connect to k8s
 
-    def create_sandbox(self):
+    def create_sandbox(self, status: SubmissionStatus):
         if self.config.is_development():
             container = self.client.containers.run(self.config.sandbox_container, detach=True, ports={"2999/tcp": 0})
 
@@ -48,22 +49,22 @@ class SandboxCreator:
                 resp = v1.create_namespaced_pod(
                     body=pod, namespace="acadnet")
                 print(f"Pod created with name {pod_name}")
+                status.set_status(f"pod created with name {pod_name}")
 
-            # wait for sandbox to start maxim 60 seconds
-            for i in range(60):
+            # wait for sandbox to start maxim 5 minutes (pod creation takes a while, even more if scaling up)
+            for i in range(300 / 5):
                 status = v1.read_namespaced_pod_status(pod_name, "acadnet")
                 if status.status.phase == "Running":
                     pod = v1.read_namespaced_pod_log(pod_name, "acadnet")
                     if "Uvicorn running" in pod:
                         break
-                time.sleep(1)
-                print("Waiting for sandbox to start")
+                time.sleep(5)
+                status.set_status(f"waiting for sandbox to start - pod status: {status.status.phase}")
 
             if "Uvicorn running" not in pod:
+                status.set_status("sandbox failed to start")
                 raise Exception("Sandbox failed to start")
             
-            print("Sandbox online")
-
             return pod_name
 
     def get_sandbox_endpoint(self, id):
