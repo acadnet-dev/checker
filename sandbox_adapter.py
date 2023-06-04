@@ -54,13 +54,13 @@ class SandboxCreator:
             # wait for sandbox to start maxim 5 minutes (pod creation takes a while, even more if scaling up)
             # 5 minutes = 60 * 5 = 300 seconds (poll every 5 seconds 60 times)
             for i in range(60):
-                status = v1.read_namespaced_pod_status(pod_name, "acadnet")
-                if status.status.phase == "Running":
+                pod_status = v1.read_namespaced_pod_status(pod_name, "acadnet")
+                if pod_status.status.phase == "Running":
                     pod = v1.read_namespaced_pod_log(pod_name, "acadnet")
                     if "Uvicorn running" in pod:
                         break
                 time.sleep(5)
-                status.set_status(f"waiting for sandbox to start - pod status: {status.status.phase}")
+                status.set_status(f"waiting for sandbox to start - pod status: {pod_status.status.phase}")
 
             if "Uvicorn running" not in pod:
                 status.set_status("sandbox failed to start")
