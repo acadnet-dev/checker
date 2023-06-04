@@ -91,7 +91,7 @@ class SandboxCreator:
 
             v1 = client.CoreV1Api()
 
-            v1.delete_namespaced_pod(pod_name, "acadnet")
+            v1.delete_namespaced_pod(id, "acadnet")
             print(f"Stopped sandbox with id {pod_name}")
 
 class SandboxAdapter:
