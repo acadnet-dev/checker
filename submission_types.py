@@ -79,7 +79,7 @@ class SimpleAcadnetIS(Submission):
         status.set_status("creating sandbox")
 
         sandbox_creator = SandboxCreator()
-        self.sandbox_container_id = sandbox_creator.create_sandbox()
+        self.sandbox_container_id = sandbox_creator.create_sandbox(status)
         endpoint = sandbox_creator.get_sandbox_endpoint(self.sandbox_container_id)
         self.sandbox = SandboxAdapter(endpoint)
 
