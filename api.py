@@ -35,7 +35,7 @@ async def create_submission(type: str, bucket: str, file: UploadFile = File(...)
 
 @app.get("/submission/status/")
 def get_submission_status(submission_id: str):
-    return {"status": runner.get_submission_status(submission_id)}
+    return runner.get_submission_status(submission_id)
 
 
 def run():
