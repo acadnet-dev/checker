@@ -125,7 +125,7 @@ class SimpleAcadnetIS(Submission):
                 "ref": ref_content
             }
 
-            if test_content == ref_content:
+            if test_content.strip() == ref_content.strip():
                 status.add_test_result(in_file, True, "success", res, diff_results)
             else:
                 status.add_test_result(in_file, False, "failed", res, diff_results)
